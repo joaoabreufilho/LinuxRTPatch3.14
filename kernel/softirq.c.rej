@@ -1,0 +1,45 @@
+--- kernel/softirq.c
++++ kernel/softirq.c
+@@ -1102,26 +1561,26 @@
+ 	open_softirq(HI_SOFTIRQ, tasklet_hi_action);
+ }
+ 
+-static int ksoftirqd_should_run(unsigned int cpu)
+-{
+-	return local_softirq_pending();
+-}
+-
+-static void run_ksoftirqd(unsigned int cpu)
++#if defined(CONFIG_SMP) || defined(CONFIG_PREEMPT_RT_FULL)
++void tasklet_unlock_wait(struct tasklet_struct *t)
+ {
+-	local_irq_disable();
+-	if (local_softirq_pending()) {
++	while (test_bit(TASKLET_STATE_RUN, &(t)->state)) {
+ 		/*
+-		 * We can safely run softirq on inline stack, as we are not deep
+-		 * in the task stack here.
++		 * Hack for now to avoid this busy-loop:
+ 		 */
+-		__do_softirq();
+-		rcu_note_context_switch(cpu);
+-		local_irq_enable();
+-		cond_resched();
+-		return;
++#ifdef CONFIG_PREEMPT_RT_FULL
++		msleep(1);
++#else
++		barrier();
++#endif
+ 	}
+-	local_irq_enable();
++}
++EXPORT_SYMBOL(tasklet_unlock_wait);
++#endif
++
++static int ksoftirqd_should_run(unsigned int cpu)
++{
++	return ksoftirqd_softirq_pending();
+ }
+ 
+ #ifdef CONFIG_HOTPLUG_CPU

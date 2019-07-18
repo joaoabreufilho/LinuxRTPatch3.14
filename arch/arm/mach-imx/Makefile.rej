@@ -1,0 +1,12 @@
+--- arch/arm/mach-imx/Makefile
++++ arch/arm/mach-imx/Makefile
+@@ -122,7 +122,8 @@
+ AFLAGS_lpddr2_freq_imx6sx.o :=-Wa,-march=armv7-a
+ AFLAGS_ddr3_freq_imx6sx.o :=-Wa,-march=armv7-a
+ AFLAGS_imx6sx_low_power_idle.o :=-Wa,-march=armv7-a
+-obj-$(CONFIG_SOC_IMX6SX) += ddr3_freq_imx6sx.o lpddr2_freq_imx6sx.o imx6sx_low_power_idle.o
++obj-$(CONFIG_SOC_IMX6SX) += ddr3_freq_imx6sx.o lpddr2_freq_imx6sx.o imx6sx_low_power_idle.o \
++	busfreq_lpddr2.o lpddr2_freq_imx6.o
+ endif
+ 
+ 

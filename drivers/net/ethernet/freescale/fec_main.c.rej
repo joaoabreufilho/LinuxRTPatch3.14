@@ -1,0 +1,42 @@
+--- drivers/net/ethernet/freescale/fec_main.c
++++ drivers/net/ethernet/freescale/fec_main.c
+@@ -1215,29 +1214,18 @@
+ 		if (bdp == txq->cur_tx)
+ 			break;
+ 
+-		bdp_t = bdp;
+-		bdnum = 1;
+-		index = fec_enet_get_bd_index(txq->tx_bd_base, bdp_t, fep);
+-		skb = txq->tx_skbuff[index];
+-		while (!skb) {
+-			bdp_t = fec_enet_get_nextdesc(bdp_t, fep, queue_id);
+-			index = fec_enet_get_bd_index(txq->tx_bd_base, bdp_t, fep);
+-			skb = txq->tx_skbuff[index];
+-			bdnum++;
+-		}
+-		if (skb_shinfo(skb)->nr_frags &&
+-		    (status = bdp_t->cbd_sc) & BD_ENET_TX_READY)
+-			break;
++		index = fec_enet_get_bd_index(txq->tx_bd_base, bdp, fep);
+ 
+-		for (i = 0; i < bdnum; i++) {
+-			if (!IS_TSO_HEADER(txq, bdp->cbd_bufaddr))
+-				dma_unmap_single(&fep->pdev->dev, bdp->cbd_bufaddr,
+-						 bdp->cbd_datlen, DMA_TO_DEVICE);
+-			bdp->cbd_bufaddr = 0;
+-			if (i < bdnum - 1)
+-				bdp = fec_enet_get_nextdesc(bdp, fep, queue_id);
+-		}
++		skb = txq->tx_skbuff[index];
+ 		txq->tx_skbuff[index] = NULL;
++		if (!IS_TSO_HEADER(txq, bdp->cbd_bufaddr))
++			dma_unmap_single(&fep->pdev->dev, bdp->cbd_bufaddr,
++					bdp->cbd_datlen, DMA_TO_DEVICE);
++		bdp->cbd_bufaddr = 0;
++		if (!skb) {
++			bdp = fec_enet_get_nextdesc(bdp, fep, queue_id);
++			continue;
++		}
+ 
+ 		/* Check for errors. */
+ 		if (status & (BD_ENET_TX_HB | BD_ENET_TX_LC |
